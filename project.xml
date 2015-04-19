@@ -5,13 +5,15 @@
  	<app file="Main" main="Main" path="bin" />
 
 	<window fps="60" background="0x333333" />
-	<window width="640" height="480" resizable="true" unless="mobile" />
+	<window width="800" height="450" resizable="true" unless="mobile" />
 	<window fullscreen="true" if="mobile" />
 	<window orientation="landscape" vsync="true" antialiasing="0" if="cpp" />
 
 	<source path="src" />
 
 	<haxelib name="Punkiversal" />
+
+	<haxedef name="advanced-telemetry" />
 
 	<assets path="assets/graphics" rename="graphics" include="*.png|*.jpg" />
 	<assets path="assets/audio" rename="audio" include="*.mp3" if="flash" />
