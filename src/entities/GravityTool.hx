@@ -24,13 +24,21 @@ class GravityTool extends Entity
 	private var physicsEntities:Array<PhysicsEntity>;
 	private var anglePoint:Point;
 
+	private var player:Player;
+
 	private static var modeMappings:Map<GravityMode, String>;
 	private static var modes:Array<GravityMode>;
+
+	private var teleCharge:Float = 0;
+
+	public var charge:Float = 100;
+	public var chargeMax:Float = 100;
 
 	public static function init() {
 		Input.define('attract', [Key.A]);
 		Input.define('repel', [Key.S]);
 		Input.define('friction', [Key.D]);
+		Input.define('teleport', [Key.SPACE]);
 
 		modeMappings = new Map<GravityMode, String>();
 
@@ -39,14 +47,18 @@ class GravityTool extends Entity
 		modeMappings.set(GravityMode.FRICTION, 'friction');
 
 		modes = [GravityMode.ATTRACT, GravityMode.REPEL, GravityMode.FRICTION];
+
 	}
 
-	function new() {
+	function new(p:Player) {
 		super(Input.mouseX, Input.mouseY);
+		layer = 4;
+
+		player = p;
 
 		graphic = new Shape();
 		cast(graphic, Shape).graphics.beginFill(0xDDDDDD);
-		cast(graphic, Shape).graphics.drawCircle(-5, -5, 10);
+		cast(graphic, Shape).graphics.drawCircle(0, 0, 10);
 
 		colorTransform = new ColorTransform();
 		graphic.transform.colorTransform = colorTransform;
@@ -66,34 +78,85 @@ class GravityTool extends Entity
 
 		toolActive = Input.mouseDown;
 
+		var playerDis = Math.pow(Input.mouseX - player.x, 2) + Math.pow(Input.mouseY - player.y, 2);
+		var playerAngle = PV.angle(player.x, player.y, Input.mouseX, Input.mouseY);
+
+		var chargeAttempt:Bool = false;
+
 		x = Input.mouseX;
 		y = Input.mouseY;
 
-		if (toolActive) {
-			scene.getClass(PhysicsEntity, physicsEntities);
-			for (e in physicsEntities) {
-				var dis = Math.max(Math.sqrt(Math.pow(x - e.x, 2) + Math.pow(y - e.y, 2)), 5),
-					angle = PV.angle(e.x, e.y, x, y);
+		// No need to square the distance if I square the comparison!
+		if (playerDis > 22500) {
+			PV.angleXY(this, playerAngle, 150, player.x, player.y);
+		}
 
-				//PV.angleXY(anglePoint, angle, 100 / dis);
-				switch(mode) {
-					case GravityMode.ATTRACT:
-						PV.angleXY(anglePoint, angle, 100 / dis);
-						anglePoint.x *= PV.elapsed;
-						anglePoint.y *= PV.elapsed;
-					case GravityMode.REPEL:
-						PV.angleXY(anglePoint, angle, -100 / dis);
-						anglePoint.x *= PV.elapsed;
-						anglePoint.y *= PV.elapsed;
-					case GravityMode.FRICTION:
-						anglePoint.x = Utils.friction(e.xSpeed, 2 / dis);
-						anglePoint.y = Utils.friction(e.ySpeed, 2 / dis);
-				}
 
-				e.xSpeed += anglePoint.x;
-				e.ySpeed += anglePoint.y;
+		if (Input.check('teleport')) {
+			chargeAttempt = true;
+			if (charge > 0) {
+				charge -= 20 * PV.elapsed;
+				teleCharge += 200 * PV.elapsed;
 			}
 		}
+
+		if (Input.released('teleport')) {
+			playerAngle *= PV.RAD;
+			player.x += Math.cos(playerAngle) * teleCharge;
+			player.y += Math.sin(playerAngle) * teleCharge;
+
+			teleCharge = 0;
+		}
+
+		if (toolActive) {
+			chargeAttempt = true;
+			if (charge > 0) {
+				charge -= 20 * PV.elapsed;
+				var effector:Point -> Float -> Float -> PhysicsEntity -> Void;
+
+				switch(mode) {
+					case GravityMode.ATTRACT:
+						effector = attractEntity;
+					case GravityMode.REPEL:
+						effector = repelEntity;
+					case GravityMode.FRICTION:
+						effector = frictionEntity;
+				}
+
+				scene.getClass(PhysicsEntity, physicsEntities);
+				for (e in physicsEntities) {
+					var dis = Math.max(Math.pow(x - e.x, 2) + Math.pow(y - e.y, 2), 100),
+						angle = PV.angle(e.x, e.y, x, y);
+
+					effector(anglePoint, dis, angle, e);
+
+					e.xSpeed += anglePoint.x;
+					e.ySpeed += anglePoint.y;
+				}
+
+#if (cpp||php)
+				physicsEntities.splice(0,physicsEntities.length);
+#else
+				untyped physicsEntities.length = 0;
+#end
+			}
+		}
+
+		if (!chargeAttempt) {
+			if (charge < chargeMax) {
+				charge += 50 * PV.elapsed;
+			}
+		}
+
+		if (charge < 0) {
+			charge = 0;
+		}
+
+		if (charge > chargeMax) {
+			charge = chargeMax;
+		}
+
+
 	}
 
 	override public function render() {
@@ -119,6 +182,23 @@ class GravityTool extends Entity
 		graphic.transform.colorTransform = colorTransform;
 
 		super.render();
+	}
+
+	private function attractEntity(anglePoint:Point, dis:Float, angle:Float, e:PhysicsEntity) {
+		PV.angleXY(anglePoint, angle, 10000 / dis);
+		anglePoint.x *= PV.elapsed;
+		anglePoint.y *= PV.elapsed;
+	}
+
+	private function repelEntity(anglePoint:Point, dis:Float, angle:Float, e:PhysicsEntity) {
+		PV.angleXY(anglePoint, angle, -10000 / dis);
+		anglePoint.x *= PV.elapsed;
+		anglePoint.y *= PV.elapsed;
+	}
+
+	private function frictionEntity(anglePoint:Point, dis:Float, angle:Float, e:PhysicsEntity) {
+		anglePoint.x = Utils.friction(e.xSpeed, 200 / dis);
+		anglePoint.y = Utils.friction(e.ySpeed, 200 / dis);
 	}
 
 	public var mode(get, set):GravityMode;
