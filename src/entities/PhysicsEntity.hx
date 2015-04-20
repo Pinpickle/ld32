@@ -10,6 +10,7 @@ class PhysicsEntity extends Entity
 
 	public var xSpeed:Float = 0;
 	public var ySpeed:Float = 0;
+	public var aSpeed:Float = 0;
 
 	public var stopAtSolid:Bool = false;
 	public var forceEffected:Bool = true;
@@ -17,14 +18,54 @@ class PhysicsEntity extends Entity
 	public var restitution:Float = 0;
 	public var friction:Float = 0.1;
 
+	private var snapAngles:Array<Float> = [0];
+
+	private var _forceMap:Map<String, Float>;
+	private var forceField:Bool = false;
+
+	function new(x:Float = 0, y:Float = 0) {
+		super(x, y);
+		_forceMap = new Map<String, Float>();
+		_class = Type.getClassName(Type.getClass(this));
+	}
+
 	override public function update() 
 	{
 		xSpeed += Utils.friction(xSpeed, friction);
-		ySpeed += Utils.friction(xSpeed, friction);
+		ySpeed += Utils.friction(ySpeed, friction);
+		aSpeed += Utils.friction(aSpeed, friction);
+
+		angle += aSpeed * PV.elapsed;
 
 		var xAdd:Float = xSpeed * PV.elapsed;
 		var yAdd:Float = ySpeed * PV.elapsed;
 
+		if (forceField) {
+			var list:List<Entity> = cast (scene, MainScene).getEntities();
+			var e:Entity;
+			var p:PhysicsEntity;
+			var m:Float;
+			var d:Float;
+			var f:Float;
+			var rad = (width * width + height * height);
+
+			for (e in list) {
+				if ((Std.is(e, PhysicsEntity)) && (e != this)) {
+					p = cast e;
+					if (_forceMap.exists(p._class)) {
+						d = Math.pow(Math.abs(p.x - x), 2) + Math.pow(Math.abs(p.y - y), 2);
+						f = _forceMap.get(p._class);
+						if (d * 4 < p.width * p.width + p.height * p.height + rad + 100) {
+							m = -Math.abs(f) * PV.elapsed / 10;
+						} else {
+							m = f * PV.elapsed / Math.max(d, 100);
+						}
+
+						p.force(PV.angle(p.x, p.y, x, y), m);
+					}
+				}
+			}
+		}
 
 		if ((stopAtSolid) && (collide("solid", x + xAdd, y + yAdd) != null))
 		{
@@ -93,5 +134,41 @@ class PhysicsEntity extends Entity
 		}
 
 		super.update();
+	}
+
+	public function force(ang:Float, mag:Float) {
+		// While ang is still in degrees, find nearest snap angle
+		var snapTest:Float, snap:Float = 0, lastDist = 360;
+		for (snapTest in snapAngles) {
+			var dForward = Utils.normaliseAngle(ang - angle);
+			var dBackward = Utils.normaliseAngle(angle - ang);
+
+			var test = dForward < dBackward ? dForward : dBackward;
+
+			if (test < lastDist) {
+				snap = snapTest;
+				lastDist = test;
+			}
+		}
+
+		ang *= PV.RAD;
+		xSpeed += Math.cos(ang) * mag;
+		ySpeed += Math.sin(ang) * mag;
+
+		// Angular velocity
+
+
+
+		aSpeed += mag * Math.abs(Math.sin(ang - (angle + snap) * PV.RAD));
+	}
+
+	private var _angle:Float = 0;
+	private var angle(get, set):Float;
+	private function get_angle():Float {
+		return _angle;
+	}
+	private function set_angle(v:Float) {
+		_angle = v;
+		return _angle;
 	}
 }

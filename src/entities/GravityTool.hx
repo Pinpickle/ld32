@@ -1,6 +1,8 @@
 
 package entities;
 
+import flash.ui.Mouse;
+import flash.display.Sprite;
 import com.punkiversal.Entity;
 import com.punkiversal.utils.Input;
 import com.punkiversal.utils.Key;
@@ -24,6 +26,9 @@ class GravityTool extends Entity
 	private var physicsEntities:Array<PhysicsEntity>;
 	private var anglePoint:Point;
 
+	private var animCircle1:Shape;
+	private var animCircle2:Shape;
+
 	private var player:Player;
 
 	private static var modeMappings:Map<GravityMode, String>;
@@ -33,6 +38,9 @@ class GravityTool extends Entity
 
 	public var charge:Float = 100;
 	public var chargeMax:Float = 100;
+
+	private var graphicAnim:Float = 0;
+	private var swapStatus:Bool = false;
 
 	public static function init() {
 		Input.define('attract', [Key.A]);
@@ -56,9 +64,20 @@ class GravityTool extends Entity
 
 		player = p;
 
-		graphic = new Shape();
-		cast(graphic, Shape).graphics.beginFill(0xDDDDDD);
-		cast(graphic, Shape).graphics.drawCircle(0, 0, 10);
+		graphic = new Sprite();
+
+		animCircle1 = new Shape();
+		animCircle1.graphics.beginFill(0xDDDDDD);
+		animCircle1.graphics.drawCircle(0, 0, 20);
+		animCircle1.scaleX = animCircle1.scaleY = 1.1;
+
+		animCircle2 = new Shape();
+		animCircle2.graphics.beginFill(0xDDDDDD);
+		animCircle2.graphics.drawCircle(0, 0, 20);
+		animCircle2.scaleX = animCircle2.scaleY = 0.9;
+
+		cast (graphic, Sprite).addChild(animCircle1);
+		cast (graphic, Sprite).addChild(animCircle2);
 
 		colorTransform = new ColorTransform();
 		graphic.transform.colorTransform = colorTransform;
@@ -70,11 +89,16 @@ class GravityTool extends Entity
 		var e:Entity;
 		var g:GravityMode;
 
-		for (g in modes) {
+		graphicAnim += PV.elapsed / 2;
+		while(graphicAnim > 1) {
+			graphicAnim -= 1;
+		}
+
+		/*for (g in modes) {
 			if (Input.pressed(modeMappings.get(g))) {
 				mode = g;
 			}
-		}
+		}*/
 
 		toolActive = Input.mouseDown;
 
@@ -92,7 +116,7 @@ class GravityTool extends Entity
 		}
 
 
-		if (Input.check('teleport')) {
+		/*if (Input.check('teleport')) {
 			chargeAttempt = true;
 			if (charge > 0) {
 				charge -= 20 * PV.elapsed;
@@ -106,13 +130,13 @@ class GravityTool extends Entity
 			player.y += Math.sin(playerAngle) * teleCharge;
 
 			teleCharge = 0;
-		}
+		}*/
 
 		if (toolActive) {
 			chargeAttempt = true;
 			if (charge > 0) {
 				charge -= 20 * PV.elapsed;
-				var effector:Point -> Float -> Float -> PhysicsEntity -> Void;
+				var effector:Float -> Float -> PhysicsEntity -> Void;
 
 				switch(mode) {
 					case GravityMode.ATTRACT:
@@ -128,10 +152,7 @@ class GravityTool extends Entity
 					var dis = Math.max(Math.pow(x - e.x, 2) + Math.pow(y - e.y, 2), 100),
 						angle = PV.angle(e.x, e.y, x, y);
 
-					effector(anglePoint, dis, angle, e);
-
-					e.xSpeed += anglePoint.x;
-					e.ySpeed += anglePoint.y;
+					effector(dis, angle, e);
 				}
 
 #if (cpp||php)
@@ -160,7 +181,7 @@ class GravityTool extends Entity
 	}
 
 	override public function render() {
-		if (toolActive) {
+		/*if (toolActive) {
 			colorTransform.redOffset = 0;
 			colorTransform.blueOffset = 0;
 			colorTransform.greenOffset = 0;
@@ -179,26 +200,55 @@ class GravityTool extends Entity
 			}
 		}
 
-		graphic.transform.colorTransform = colorTransform;
+		graphic.transform.colorTransform = colorTransform;*/
+		var anim1Point = (1 - graphicAnim) + 0.5;
+		var anim2Point = (1 - graphicAnim);
+
+		if (anim1Point > 1) {
+			anim1Point -= 1;
+			if (!swapStatus) {
+				cast (graphic, Sprite).swapChildren(animCircle1, animCircle2);
+				swapStatus = true;
+			}
+		} else {
+			if (swapStatus) {
+				cast (graphic, Sprite).swapChildren(animCircle1, animCircle2);
+				swapStatus = false;
+			}
+		}
+
+		animCircle1.scaleX = animCircle1.scaleY = anim1Point + 0.5;
+		animCircle1.alpha = Utils.easeUpDown(anim1Point, 0, 1, 1);//Math.sin(Utils.easeInOut(anim1Point / .8 - 0.1, 0, 1, 1) * Math.PI);
+
+		animCircle2.scaleX = animCircle2.scaleY = anim2Point + 0.5;
+		animCircle2.alpha = Utils.easeUpDown(anim2Point, 0, 1, 1);
 
 		super.render();
 	}
 
-	private function attractEntity(anglePoint:Point, dis:Float, angle:Float, e:PhysicsEntity) {
-		PV.angleXY(anglePoint, angle, 10000 / dis);
-		anglePoint.x *= PV.elapsed;
-		anglePoint.y *= PV.elapsed;
+	override public function added() {
+#if !debug
+		Mouse.hide();
+#end
 	}
 
-	private function repelEntity(anglePoint:Point, dis:Float, angle:Float, e:PhysicsEntity) {
-		PV.angleXY(anglePoint, angle, -10000 / dis);
-		anglePoint.x *= PV.elapsed;
-		anglePoint.y *= PV.elapsed;
+	override public function removed() {
+#if !debug
+		Mouse.show();
+#end
 	}
 
-	private function frictionEntity(anglePoint:Point, dis:Float, angle:Float, e:PhysicsEntity) {
-		anglePoint.x = Utils.friction(e.xSpeed, 200 / dis);
-		anglePoint.y = Utils.friction(e.ySpeed, 200 / dis);
+	private function attractEntity(dis:Float, angle:Float, e:PhysicsEntity) {
+		e.force(angle, 100000 / dis * PV.elapsed);
+	}
+
+	private function repelEntity(dis:Float, angle:Float, e:PhysicsEntity) {
+		e.force(angle, -10000 / dis * PV.elapsed);
+	}
+
+	private function frictionEntity(dis:Float, angle:Float, e:PhysicsEntity) {
+		e.xSpeed += Utils.friction(e.xSpeed, 200 / dis);
+		e.ySpeed += Utils.friction(e.ySpeed, 200 / dis);
 	}
 
 	public var mode(get, set):GravityMode;

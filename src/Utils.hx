@@ -54,6 +54,15 @@ class Utils
 		return (Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random()) / 3 - 1;
 	}
 
+	public static function easeInOut(t:Float, b:Float, c:Float, d:Float):Float {
+		t /= d;
+		return -c * t*(t-2) + b;
+	}
+
+	public static function easeUpDown(t:Float, b:Float, c:Float, d:Float):Float {
+		return ((t / d) < 0.5) ? Utils.easeInOut(t, b, c, d / 2) : Utils.easeInOut(t - d / 2, b + c, -c, d / 2);
+	}
+
 	public static inline function friction(speed:Float, friction:Float) {
 		return Math.min(Math.abs(speed * friction * PV.elapsed), Math.abs(speed)) * -Utils.sgn(speed);
 	}

@@ -1,6 +1,7 @@
 package entities.interactables;
 
-import com.punkiversal.masks.Hitbox;
+import com.punkiversal.math.Vector;
+import com.punkiversal.masks.Polygon;
 import flash.display.Shape;
 
 class Droppable extends Interactable
@@ -8,23 +9,56 @@ class Droppable extends Interactable
     public function new(x:Float = 0, y:Float = 0) {
         super(x, y);
 
-        graphic = new Shape();
-        cast(graphic, Shape).graphics.beginFill(0xFF0000);
-        cast(graphic, Shape).graphics.drawRect(-6, -6, 12, 12);
+        _forceMap.set(Type.getClassName(Droppable), -1000);
+        _forceMap.set(Type.getClassName(Collectable), -1000);
+        _forceMap.set(Type.getClassName(Smashable), -1000);
+        _forceMap.set(Type.getClassName(Player), -100);
 
-        mask = new Hitbox(12, 12, -6, -6);
+        var squarePoints:Array<Vector> = [
+            new Vector(-9, 0),
+            new Vector(0, -9),
+            new Vector(9, 0),
+            new Vector(0, 9)
+        ];
+
+        snapAngles = [0, 90, 180, 270];
+
+        cast (graphic, Shape).graphics.beginFill(0x5B3373);
+        cast (graphic, Shape).graphics.moveTo(squarePoints[0].x, squarePoints[0].y);
+        cast (graphic, Shape).graphics.lineTo(squarePoints[1].x, squarePoints[1].y);
+        cast (graphic, Shape).graphics.lineTo(squarePoints[2].x, squarePoints[2].y);
+        cast (graphic, Shape).graphics.lineTo(squarePoints[3].x, squarePoints[3].y);
+
+        mask = new Polygon(squarePoints);
 
         type = "collectable";
 
     }
 
     override public function update() {
-        if (collide("player", x, y) != null) {
-            scene.recycle(this);
-// Add Points
+
+        if (!dead) {
+            var c:Interactable = cast collide("collectable", x, y);
+
+            if ((c != null) && (Std.is(c, Droppable))) {
+                cast (scene, MainScene).player.health -= 1;
+                Main.playBad();
+                cast (scene, MainScene).animator.consume(this, 'badbubble', cast c);
+            }
         }
 
         super.update();
+    }
+
+    override public function render() {
+        graphic.rotation = -angle;
+        super.render();
+    }
+
+    override private function set_angle(v:Float):Float {
+        cast (mask, Polygon).angle = v;
+        _angle = v;
+        return _angle;
     }
 
 }
