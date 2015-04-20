@@ -32,6 +32,9 @@ class HUD extends Entity {
 
         scoreText = new TextField();
         scoreText.defaultTextFormat = format;
+#if flash
+		scoreText.embedFonts = true;
+#end
         scoreText.autoSize = TextFieldAutoSize.RIGHT;
         scoreText.text = "0";
 
