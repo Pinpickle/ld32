@@ -44,6 +44,11 @@ class Main extends Engine
 	public static var highScore:Int = 0;
 	public static var lastScore:Int = 0;
 	public static var muted:Bool = false;
+#if flash
+	public static var musicSuffix:String = '.mp3';
+#else
+	public static var musicSuffix:String = '.ogg';
+#end
 
 	override public function update() {
 		super.update();
@@ -87,7 +92,7 @@ class Main extends Engine
 
 
 	private static function initSounds() {
-		var sound:Sfx = new Sfx('audio/bg-audio.mp3');
+		var sound:Sfx = new Sfx('audio/bg-audio' + musicSuffix);
 		sound.loop(0.2);
 
 		if (muted) {
@@ -100,13 +105,13 @@ class Main extends Engine
 		_badSounds = new List<Sfx>();
 		_availableBad = new List<Sfx>();
 
-		for (name in ['audio/piano1.mp3', 'audio/piano2.mp3', 'audio/piano3.mp3', 'audio/piano4.mp3']) {
-			_availableNice.add(new Sfx(name));
+		for (name in ['audio/piano1', 'audio/piano2', 'audio/piano3', 'audio/piano4']) {
+			_availableNice.add(new Sfx(name + musicSuffix));
 		}
 
 		Sfx.setVolume('bad', 0.7);
-		for (name in ['audio/bad1.mp3', 'audio/bad2.mp3', 'audio/bad3.mp3', 'audio/bad4.mp3']) {
-			var s:Sfx = new Sfx(name);
+		for (name in ['audio/bad1', 'audio/bad2', 'audio/bad3', 'audio/bad4']) {
+			var s:Sfx = new Sfx(name + musicSuffix);
 			s.type = 'bad';
 			_availableBad.add(s);
 		}
