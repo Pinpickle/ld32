@@ -15,6 +15,14 @@ class Dropper extends Entity {
         graphic = new Shape();
         cast (graphic, Shape).graphics.beginFill(0xCCCCCC);
         cast (graphic, Shape).graphics.drawRect(-20, -20, 40, 40);
+        cast (graphic, Shape).graphics.endFill();
+
+        cast (graphic, Shape).graphics.lineStyle(2, 0xa890b5);
+        cast (graphic, Shape).graphics.moveTo(-9, 0);
+        cast (graphic, Shape).graphics.lineTo(0, -9);
+        cast (graphic, Shape).graphics.lineTo(9, 0);
+        cast (graphic, Shape).graphics.lineTo(0, 9);
+        cast (graphic, Shape).graphics.lineTo(-9, 0);
 
         mask = new Hitbox(40, 40, -20, -20);
     }

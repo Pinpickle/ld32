@@ -6,6 +6,8 @@ import flash.display.Shape;
 
 class Droppable extends Interactable
 {
+	public static var mainColour:Int = 0x5B3373;
+
     public function new(x:Float = 0, y:Float = 0) {
         super(x, y);
 
@@ -23,7 +25,7 @@ class Droppable extends Interactable
 
         snapAngles = [0, 90, 180, 270];
 
-        cast (graphic, Shape).graphics.beginFill(0x5B3373);
+        cast (graphic, Shape).graphics.beginFill(mainColour);
         cast (graphic, Shape).graphics.moveTo(squarePoints[0].x, squarePoints[0].y);
         cast (graphic, Shape).graphics.lineTo(squarePoints[1].x, squarePoints[1].y);
         cast (graphic, Shape).graphics.lineTo(squarePoints[2].x, squarePoints[2].y);

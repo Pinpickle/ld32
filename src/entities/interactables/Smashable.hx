@@ -8,6 +8,7 @@ import com.punkiversal.Entity;
 
 class Smashable extends Interactable
 {
+	public static var mainColour:Int = 0xAD3E2B;
 
 	public function new(x:Float = 0, y:Float = 0) {
 		super(x, y);
@@ -20,7 +21,7 @@ class Smashable extends Interactable
 			new Vector(Math.cos(Math.PI * 4 / 3) * 10, 10 * Math.sin(Math.PI * 4 / 3))
 		];
 
-		cast (graphic, Shape).graphics.beginFill(0xAD3E2B);
+		cast (graphic, Shape).graphics.beginFill(mainColour);
 		cast (graphic, Shape).graphics.moveTo(trianglePoints[0].x, trianglePoints[0].y);
 		cast (graphic, Shape).graphics.lineTo(trianglePoints[1].x, trianglePoints[1].y);
 		cast (graphic, Shape).graphics.lineTo(trianglePoints[2].x, trianglePoints[2].y);

@@ -6,10 +6,12 @@ import flash.display.Shape;
 
 class Collectable extends Interactable
 {
+	public static var mainColour:Int = 0x2DA64D;
+
 	public function new(x:Float = 0, y:Float = 0) {
 		super(x, y);
 
-		cast(graphic, Shape).graphics.beginFill(0x2DA64D);
+		cast(graphic, Shape).graphics.beginFill(mainColour);
 		cast(graphic, Shape).graphics.drawCircle(0, 0, 6);
 		
 		mask = new Hitbox(12, 12, -6, -6);
