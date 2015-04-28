@@ -6,7 +6,7 @@ import flash.display.Shape;
 
 class Droppable extends Interactable
 {
-	public static var mainColour:Int = 0x5B3373;
+	public static var mainColour:Int = 0x6d9243;
 
     public function new(x:Float = 0, y:Float = 0) {
         super(x, y);

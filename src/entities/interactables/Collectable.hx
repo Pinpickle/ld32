@@ -6,7 +6,7 @@ import flash.display.Shape;
 
 class Collectable extends Interactable
 {
-	public static var mainColour:Int = 0x2DA64D;
+	public static var mainColour:Int = 0x38a6dc;
 
 	public function new(x:Float = 0, y:Float = 0) {
 		super(x, y);

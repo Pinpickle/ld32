@@ -33,11 +33,11 @@ class Player extends PhysicsEntity
 		graphic = new Sprite();
 
 		var playerShape:Shape = new Shape();
-		playerShape.graphics.beginFill(0x555555);
+		playerShape.graphics.beginFill(0x666666);
 		playerShape.graphics.drawCircle(0, 0, 18);
 		playerShape.graphics.endFill();
 
-		playerShape.graphics.lineStyle(2, Collectable.mainColour);
+		playerShape.graphics.lineStyle(3, Collectable.mainColour);
 		playerShape.graphics.drawCircle(0, 0, 18);
 
 		cast (graphic, Sprite).addChild(playerShape);
