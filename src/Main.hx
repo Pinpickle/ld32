@@ -10,6 +10,7 @@ import com.punkiversal.utils.Key;
 
 import flash.display.StageScaleMode;
 import flash.display.StageQuality;
+import flash.events.Event;
 import flash.ui.Mouse;
 
 class Main extends Engine
@@ -24,7 +25,7 @@ class Main extends Engine
 		PV.console.enable(TraceCapture.Yes);
 #end
 
-		PV.stage.scaleMode = StageScaleMode.SHOW_ALL;
+		PV.stage.scaleMode = StageScaleMode.NO_SCALE;
 		PV.stage.quality = StageQuality.BEST;
 		PV.defaultFont = 'font/Lato-Light.ttf';
 
@@ -76,6 +77,20 @@ class Main extends Engine
 			}
 		}
 #end
+	}
+
+	override private function resize() {
+		super.resize();
+		var aspect:Float = cast PV.stage.stageWidth / cast PV.stage.stageHeight;
+		var scale:Float = 0;
+
+		if (aspect > 16.0 / 9.0) {
+			scale = cast PV.stage.stageHeight / 450;
+		} else {
+			scale = cast PV.stage.stageWidth / 800;
+		}
+		trace(scale);
+		PV.screen.scale = scale;
 	}
 
 	public static function main() {
